@@ -83,7 +83,6 @@ export function StatCard({
         t.glow,
       )}
     >
-      {/* Top gradient wash (only visible on hover) */}
       <div
         className={cn(
           'pointer-events-none absolute inset-x-0 top-0 h-24 opacity-0 transition-opacity duration-300 group-hover:opacity-100',
@@ -97,17 +96,12 @@ export function StatCard({
       <CardContent className="relative p-5">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0 flex-1">
-            {/* Label */}
-            <p className="text-sm font-medium text-muted-foreground">
-              {title}
-            </p>
+            <p className="text-sm font-medium text-muted-foreground">{title}</p>
 
-            {/* Value */}
             <p className="mt-2 text-2xl font-semibold tracking-tight tabular-nums">
               {loading ? <Skeleton className="h-7 w-28" /> : value}
             </p>
 
-            {/* Detail / trend chip */}
             <div className="mt-2.5 min-h-[20px]">
               {loading ? (
                 <Skeleton className="h-3.5 w-32" />
@@ -129,7 +123,6 @@ export function StatCard({
             </div>
           </div>
 
-          {/* Icon tile */}
           <div
             className={cn(
               'relative grid h-11 w-11 shrink-0 place-items-center rounded-xl ring-1 ring-inset transition-transform duration-300 group-hover:scale-105',
@@ -141,7 +134,6 @@ export function StatCard({
           </div>
         </div>
 
-        {/* Bottom accent line on hover */}
         <div
           className={cn(
             'pointer-events-none absolute inset-x-0 bottom-0 h-px origin-left scale-x-0 transition-transform duration-500 group-hover:scale-x-100',
@@ -163,7 +155,19 @@ function formatCurrency(n: number) {
 }
 
 export function StatGrid() {
-  const { data, isLoading } = useGetDashboardSummaryQuery();
+  const { data, isLoading, isFetching } = useGetDashboardSummaryQuery(
+    undefined,
+    {
+      // Always refetch when the dashboard mounts or the component remounts.
+      // Without this, RTK Query serves stale cache and stats look "frozen".
+      refetchOnMountOrArgChange: true,
+      // Optional: also refetch when the window regains focus.
+      refetchOnFocus: true,
+    },
+  );
+
+  // Show skeleton on first load, dim the grid on background refetch
+  const loading = isLoading;
 
   const pctLabel = (p: number | undefined) =>
     p === undefined
@@ -171,7 +175,12 @@ export function StatGrid() {
       : `${p >= 0 ? '+' : ''}${p.toFixed(1)}% vs last month`;
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    <div
+      className={cn(
+        'grid gap-4 transition-opacity sm:grid-cols-2 xl:grid-cols-4',
+        isFetching && !isLoading && 'opacity-60',
+      )}
+    >
       <StatCard
         title="Total products"
         value={String(data?.totalProducts ?? '—')}
@@ -179,7 +188,7 @@ export function StatGrid() {
         trend={data?.productsChangePct}
         icon={Package}
         tone="blue"
-        loading={isLoading}
+        loading={loading}
       />
       <StatCard
         title="Stock value"
@@ -188,7 +197,7 @@ export function StatGrid() {
         trend={data?.stockValueChangePct}
         icon={CircleDollarSign}
         tone="emerald"
-        loading={isLoading}
+        loading={loading}
       />
       <StatCard
         title="Low stock items"
@@ -200,7 +209,7 @@ export function StatGrid() {
         }
         icon={AlertTriangle}
         tone="amber"
-        loading={isLoading}
+        loading={loading}
         hideTrend
       />
       <StatCard
@@ -210,7 +219,7 @@ export function StatGrid() {
         trend={data?.movementsChangePct}
         icon={ArrowUpFromLine}
         tone="violet"
-        loading={isLoading}
+        loading={loading}
       />
     </div>
   );
