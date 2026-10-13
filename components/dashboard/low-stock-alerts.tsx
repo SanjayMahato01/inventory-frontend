@@ -63,12 +63,18 @@ function getSeverity(quantity: number, minimum: number): Severity {
 }
 
 export function LowStockAlerts() {
-  const { data, isLoading } = useListLowStockProductsQuery({
-    page: 1,
-    limit: 5,
-    sort: 'quantity',
-    order: 'asc',
-  });
+  const { data, isLoading, isFetching } = useListLowStockProductsQuery(
+    {
+      page: 1,
+      limit: 5,
+      sort: 'quantity',
+      order: 'asc',
+    },
+    {
+      refetchOnMountOrArgChange: true,
+      refetchOnFocus: true,
+    },
+  );
 
   const items = data?.items ?? [];
   const total = data?.total ?? 0;
@@ -96,7 +102,12 @@ export function LowStockAlerts() {
         ) : items.length === 0 ? (
           <EmptyState />
         ) : (
-          <ul className="space-y-2">
+          <ul
+            className={cn(
+              'space-y-2 transition-opacity',
+              isFetching && 'opacity-60',
+            )}
+          >
             {items.map((product) => {
               const severity = getSeverity(product.quantity, product.minimum);
               const SeverityIcon = severity.icon;
@@ -114,7 +125,6 @@ export function LowStockAlerts() {
                     severity.rowClass,
                   )}
                 >
-                  {/* Severity icon */}
                   <div
                     className={cn(
                       'grid size-9 shrink-0 place-items-center rounded-lg',
@@ -124,7 +134,6 @@ export function LowStockAlerts() {
                     <SeverityIcon className="size-4" />
                   </div>
 
-                  {/* Content */}
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5">
                       <p className="truncate text-sm font-medium leading-tight">
@@ -174,7 +183,6 @@ export function LowStockAlerts() {
         )}
       </CardContent>
 
-      {/* Footer — full-width link, cleaner */}
       <div className="border-t border-border/60">
         <Link
           href="/low-stock"
@@ -187,8 +195,6 @@ export function LowStockAlerts() {
     </Card>
   );
 }
-
-/* ───────────────────────── Empty + Skeleton ───────────────────────── */
 
 function EmptyState() {
   return (

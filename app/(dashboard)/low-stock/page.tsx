@@ -9,7 +9,10 @@ import {
   type SortOrder,
 } from './low-stock-table';
 import { ProductSearch } from '@/components/products/product-search';
-import { StockDialog, type StockDirection } from '@/components/products/stock-dialog';
+import {
+  StockDialog,
+  type StockDirection,
+} from '@/components/products/stock-dialog';
 import {
   useListLowStockProductsQuery,
   useCountLowStockProductsQuery,
@@ -25,15 +28,24 @@ export default function LowStockPage() {
   const [stockProduct, setStockProduct] = useState<Product | null>(null);
   const [stockDirection, setStockDirection] = useState<StockDirection>('in');
 
-  const { data, isLoading, isFetching, refetch } = useListLowStockProductsQuery({
-    search,
-    page,
-    limit: 10,
-    sort,
-    order,
-  });
+  const { data, isLoading, isFetching } = useListLowStockProductsQuery(
+    {
+      search,
+      page,
+      limit: 10,
+      sort,
+      order,
+    },
+    {
+      refetchOnMountOrArgChange: true,
+      refetchOnFocus: true,
+    },
+  );
 
-  const { data: countData } = useCountLowStockProductsQuery();
+  const { data: countData } = useCountLowStockProductsQuery(undefined, {
+    refetchOnMountOrArgChange: true,
+    refetchOnFocus: true,
+  });
 
   const handleSortChange = (field: SortField) => {
     if (field === sort) {
@@ -52,7 +64,6 @@ export default function LowStockPage() {
 
   return (
     <>
-      {/* Header */}
       <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
           <div className="flex items-center gap-2">
@@ -87,10 +98,16 @@ export default function LowStockPage() {
             }}
           />
         </CardHeader>
-        <CardContent>
+        <CardContent
+          className={
+            isFetching && !isLoading
+              ? 'opacity-60 transition-opacity'
+              : 'transition-opacity'
+          }
+        >
           <LowStockTable
             products={data?.items ?? []}
-            loading={isLoading || isFetching}
+            loading={isLoading}
             sort={sort}
             order={order}
             onSortChange={handleSortChange}
@@ -132,7 +149,6 @@ export default function LowStockPage() {
         setOpen={(v) => {
           if (!v) setStockProduct(null);
         }}
-        onDone={refetch}
       />
     </>
   );

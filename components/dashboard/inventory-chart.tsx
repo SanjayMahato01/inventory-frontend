@@ -23,7 +23,14 @@ const H = 220;
 export function InventoryChart() {
   const [days, setDays] = useState(30);
   const [hoverIdx, setHoverIdx] = useState<number | null>(null);
-  const { data, isLoading } = useGetInventoryTrendQuery({ days });
+
+  const { data, isLoading, isFetching } = useGetInventoryTrendQuery(
+    { days },
+    {
+      refetchOnMountOrArgChange: true,
+      refetchOnFocus: true,
+    },
+  );
 
   const points = data?.points ?? [];
 
@@ -116,7 +123,12 @@ export function InventoryChart() {
         </Tabs>
       </CardHeader>
 
-      <CardContent>
+      <CardContent
+        className={cn(
+          'transition-opacity',
+          isFetching && !isLoading && 'opacity-60',
+        )}
+      >
         {isLoading ? (
           <ChartSkeleton />
         ) : points.length === 0 ? (
@@ -125,7 +137,6 @@ export function InventoryChart() {
           </div>
         ) : (
           <div className="space-y-4">
-            {/* Header numbers — plain, full numbers */}
             <div className="flex items-baseline justify-between">
               <div>
                 <p className="text-xs text-muted-foreground">Current value</p>
@@ -141,7 +152,6 @@ export function InventoryChart() {
               </div>
             </div>
 
-            {/* SVG chart */}
             <div className="relative">
               <svg
                 viewBox={`0 0 ${W} ${H}`}
@@ -293,7 +303,6 @@ export function InventoryChart() {
               )}
             </div>
 
-            {/* X-axis labels */}
             <div className="flex items-center justify-between text-[10px] text-muted-foreground">
               {points
                 .filter(
@@ -311,7 +320,6 @@ export function InventoryChart() {
                 ))}
             </div>
 
-            {/* Legend */}
             <div className="flex items-center justify-between border-t border-border/60 pt-2 text-[10px] text-muted-foreground">
               <span className="flex items-center gap-1.5">
                 <span className="h-1 w-4 rounded-full bg-gradient-to-r from-primary/40 to-primary" />
