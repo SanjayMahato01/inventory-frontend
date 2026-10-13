@@ -5,7 +5,7 @@ Frontend for the inventory management system. Next.js 16 (App Router) · TypeScr
 ## Setup
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/SanjayMahato01/inventory-frontend.git
 cd inventory-frontend
 npm install
 cp .env.example .env   # fill in values below
