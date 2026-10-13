@@ -19,12 +19,16 @@ import { ProductSearch } from '@/components/products/product-search';
 import { AddProductDialog } from '@/components/products/add-product-dialog';
 import { EditProductDialog } from '@/components/products/edit-product-dialog';
 import { DeleteProductDialog } from '@/components/products/delete-product-dialog';
-import { StockDialog, type StockDirection } from '@/components/products/stock-dialog';
+import {
+  StockDialog,
+  type StockDirection,
+} from '@/components/products/stock-dialog';
 import {
   useListProductsQuery,
   type Product,
 } from '@/lib/features/api/productApi';
 import { ViewProductDialog } from '@/components/products/view-product-dialog';
+import { cn } from '@/lib/utils';
 
 export default function ProductsPage() {
   const [search, setSearch] = useState('');
@@ -36,19 +40,25 @@ export default function ProductsPage() {
   const [addOpen, setAddOpen] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
   const [deleting, setDeleting] = useState<Product | null>(null);
-  
+
   const [stockProduct, setStockProduct] = useState<Product | null>(null);
   const [stockDirection, setStockDirection] = useState<StockDirection>('in');
-  
-  const [viewing, setViewing] = useState<Product | null>(null); // 👈 new state
 
-  const { data, isLoading, isFetching, refetch } = useListProductsQuery({
-    search,
-    page,
-    limit: 10,
-    sort,
-    order,
-  });
+  const [viewing, setViewing] = useState<Product | null>(null);
+
+  const { data, isLoading, isFetching } = useListProductsQuery(
+    {
+      search,
+      page,
+      limit: 10,
+      sort,
+      order,
+    },
+    {
+      refetchOnMountOrArgChange: true,
+      refetchOnFocus: true,
+    },
+  );
 
   const handleSortChange = (field: SortField) => {
     if (field === sort) {
@@ -88,7 +98,9 @@ export default function ProductsPage() {
             <CardDescription>
               {data ? `${data.total} products` : 'Loading…'}
               {isFetching && !isLoading && (
-                <span className="ml-2 text-xs text-muted-foreground">Refreshing…</span>
+                <span className="ml-2 text-xs text-muted-foreground">
+                  Refreshing…
+                </span>
               )}
             </CardDescription>
           </div>
@@ -100,10 +112,15 @@ export default function ProductsPage() {
             }}
           />
         </CardHeader>
-        <CardContent>
+        <CardContent
+          className={cn(
+            'transition-opacity',
+            isFetching && !isLoading && 'opacity-60',
+          )}
+        >
           <ProductTable
             products={data?.items ?? []}
-            loading={isLoading || isFetching}
+            loading={isLoading}
             sort={sort}
             order={order}
             onSortChange={handleSortChange}
@@ -142,7 +159,7 @@ export default function ProductsPage() {
         </CardContent>
       </Card>
 
-      <AddProductDialog open={addOpen} setOpen={setAddOpen} onCreated={refetch} />
+      <AddProductDialog open={addOpen} setOpen={setAddOpen} />
 
       <EditProductDialog
         product={editing}
@@ -150,7 +167,6 @@ export default function ProductsPage() {
         setOpen={(v) => {
           if (!v) setEditing(null);
         }}
-        onUpdated={refetch}
       />
 
       <DeleteProductDialog
@@ -159,7 +175,6 @@ export default function ProductsPage() {
         setOpen={(v) => {
           if (!v) setDeleting(null);
         }}
-        onDeleted={refetch}
       />
 
       <StockDialog
@@ -169,10 +184,9 @@ export default function ProductsPage() {
         setOpen={(v) => {
           if (!v) setStockProduct(null);
         }}
-        onDone={refetch}
       />
 
-       <ViewProductDialog
+      <ViewProductDialog
         product={viewing}
         open={!!viewing}
         setOpen={(v) => {
